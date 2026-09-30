@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Research · Run Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%94%8E%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/ui/app.css">
+</head>
+<body>
+<header>
+  <h1>Deep Research</h1>
+  <span class="sub">agentic pipeline · plan → research → verify → synthesize → critique</span>
+  <span id="health" class="badge">…</span>
+</header>
+
+<main>
+  <!-- Left column: ask + pipeline + feed -->
+  <section class="col main-col">
+    <div class="card">
+      <h2>Ask a research question</h2>
+      <form id="ask-form">
+        <textarea id="question" rows="2" required minlength="8" maxlength="500"
+          placeholder="e.g. How are vector databases evolving in 2026?"></textarea>
+        <input id="focus" type="text" maxlength="300"
+          placeholder="Optional steer — e.g. focus on cost benchmarks">
+        <div class="examples">
+          <span class="muted">try:</span>
+          <button type="button" class="example">How do LLMs handle long context windows?</button>
+          <button type="button" class="example">Best practices for deploying small local LLMs on laptops?</button>
+          <button type="button" class="example">What is retrieval augmented generation and why does it matter?</button>
+        </div>
+        <button id="ask-btn" type="submit">Start research run</button>
+      </form>
+      <div id="error" class="error" hidden></div>
+    </div>
+
+    <div class="card" id="pipeline-card" hidden>
+      <div class="pipeline-head">
+        <h2>Pipeline</h2>
+        <div id="run-meta"></div>
+      </div>
+      <div id="pipeline" class="pipeline">
+        <span class="stage" data-stage="plan">plan</span>
+        <span class="arrow">→</span>
+        <span class="stage" data-stage="research">research ×N</span>
+        <span class="arrow">→</span>
+        <span class="stage" data-stage="verify">verify</span>
+        <span class="arrow">→</span>
+        <span class="stage" data-stage="synthesize">synthesize</span>
+        <span class="arrow">→</span>
+        <span class="stage" data-stage="critique">critique</span>
+      </div>
+      <div id="metrics" class="metrics" hidden>
+        <span class="metric" title="status"><span id="m-status" class="pill">queued</span></span>
+        <span class="metric" title="elapsed">⏱ <b id="m-elapsed">0:00</b></span>
+        <span class="metric" title="LLM calls">🧠 <b id="m-llm">0</b></span>
+        <span class="metric" title="web searches">🔍 <b id="m-searches">0</b></span>
+        <span class="metric" title="cost (USD)">💰 <b id="m-cost">$0.00</b></span>
+        <span class="metric actions">
+          <button id="cancel-btn" class="ghost" hidden>Cancel</button>
+          <button id="copy-btn" class="ghost" hidden>Copy markdown</button>
+        </span>
+      </div>
+    </div>
+
+    <div class="card grow">
+      <h2>Live progress <span class="muted">(SSE)</span></h2>
+      <div id="feed" class="feed"><div class="muted">No active run.</div></div>
+    </div>
+  </section>
+
+  <!-- Middle column: report -->
+  <section class="col report-col">
+    <div class="card grow">
+      <h2>Report</h2>
+      <div id="report-empty" class="muted">Reports appear here when a run finishes.</div>
+      <article id="report" hidden>
+        <h3 id="report-question"></h3>
+        <div id="report-summary" class="summary"></div>
+        <div id="report-sections"></div>
+        <div class="sub-h">Sources</div>
+        <ol id="report-citations" class="citations"></ol>
+        <div id="report-limitations-wrap" hidden>
+          <div class="sub-h">Limitations</div>
+          <ul id="report-limitations"></ul>
+        </div>
+        <div id="report-critique" class="critique" hidden></div>
+      </article>
+      <div id="run-error" class="run-error" hidden></div>
+    </div>
+  </section>
+
+  <!-- Right column: run history -->
+  <section class="col history-col">
+    <div class="card grow">
+      <h2>Runs</h2>
+      <div id="run-list" class="run-list"><div class="muted">Loading…</div></div>
+    </div>
+  </section>
+</main>
+
+<script src="/ui/app.js"></script>
+</body>
+</html>

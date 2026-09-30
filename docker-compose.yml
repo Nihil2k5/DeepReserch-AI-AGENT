@@ -1,0 +1,72 @@
+x-app-env: &app-env
+  DR_ENVIRONMENT: docker
+  DR_DATABASE_URL: postgresql://research:research@db:5432/research
+  DR_REDIS_URL: redis://cache:6379/0
+  DR_LLM_PROVIDER: ${DR_LLM_PROVIDER:-openai}
+  DR_LLM_API_KEY: ${DR_LLM_API_KEY:-}
+  DR_LLM_BASE_URL: ${DR_LLM_BASE_URL:-https://api.openai.com/v1}
+  DR_LLM_MODEL: ${DR_LLM_MODEL:-gpt-4o-mini}
+  DR_LLM_REASONING_MODEL: ${DR_LLM_REASONING_MODEL:-gpt-4o}
+  DR_SEARCH_PROVIDER: ${DR_SEARCH_PROVIDER:-exa}
+  DR_EXA_API_KEY: ${DR_EXA_API_KEY:-}
+  DR_MAX_COST_USD: ${DR_MAX_COST_USD:-1.50}
+  DR_LANGFUSE_PUBLIC_KEY: ${DR_LANGFUSE_PUBLIC_KEY:-}
+  DR_LANGFUSE_SECRET_KEY: ${DR_LANGFUSE_SECRET_KEY:-}
+  DR_LANGFUSE_HOST: ${DR_LANGFUSE_HOST:-https://cloud.langfuse.com}
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: research
+      POSTGRES_PASSWORD: research
+      POSTGRES_DB: research
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U research -d research"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  cache:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    ports:
+      - "8100:8100"
+    command:
+      ["uvicorn", "deep_research.api.app:app", "--host", "0.0.0.0", "--port", "8100"]
+
+  worker:
+    build: .
+    environment:
+      <<: *app-env
+      DR_WORKER_CONCURRENCY: ${DR_WORKER_CONCURRENCY:-2}
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    command: ["research-worker"]
+    # Scale out with: docker compose up --scale worker=4
+
+volumes:
+  pgdata:
